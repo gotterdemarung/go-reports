@@ -5,9 +5,9 @@ import (
 )
 
 type Value struct {
-	Stringv				*string			`json:"s"`
-	Numberv				*float64		`json:"n"`
-	Precision			*int8			`json:"p"`
+	Stringv				*string			`json:"s,omitempty"`
+	Numberv				*float64		`json:"n,omitempty"`
+	Precision			*int8			`json:"p,omitempty"`
 }
 
 var emptyString = ""
@@ -15,7 +15,7 @@ var zeroPrecision int8 = 0
 var minus1Precision int8 = -1
 
 // Creates new value object
-func newValue(o interface{}) Value {
+func NewValue(o interface{}) Value {
 	if o == nil {
 		return Value{
 			Stringv: &emptyString,
@@ -42,6 +42,11 @@ func newValue(o interface{}) Value {
 			Stringv: &emptyString,
 		}
 	}
+}
+
+// Returns true if value contains string
+func (v Value) IsNumber() bool {
+	return v.Numberv != nil && v.Precision != nil
 }
 
 // Returns string representation of value

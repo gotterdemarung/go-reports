@@ -116,7 +116,7 @@ func (c *Chunk) AddRow(values ...interface{}) {
 			cells[i] = cc;
 		} else {
 			cells[i] = Cell{
-				Value: newValue(v),
+				Value: NewValue(v),
 			}
 		}
 	}
@@ -128,7 +128,7 @@ func (c *Chunk) AddRow(values ...interface{}) {
 
 func NewCell(val interface{}, Description string, Marker int) Cell {
 	return Cell{
-		Value: newValue(val),
+		Value: NewValue(val),
 		Description: Description,
 		Marker: Marker,
 	}

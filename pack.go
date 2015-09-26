@@ -9,10 +9,6 @@ import (
 	"encoding/binary"
 )
 
-// Json marshaller implementation
-func (c Cell) MarshalJSON() ([]byte, error) {
-	return []byte{}, nil // TODO
-}
 
 // Packs report to binary format
 func (r *Report) PackBin() ([]byte, error) {
@@ -121,7 +117,7 @@ func UnpackFilters(bts []byte) (*Filters, error) {
 		return nil, err
 	}
 
-	var f Filters
+	var f Filters = map[string]interface{}{}
 	all, err := ioutil.ReadAll(r)
 	if err != nil {
 		return nil, err
