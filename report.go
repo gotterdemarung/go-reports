@@ -2,7 +2,6 @@ package reports
 
 import (
 	"time"
-	"strconv"
 )
 
 const (
@@ -63,7 +62,7 @@ type Row struct {
 
 // Report value
 type Cell struct {
-	Value 				interface{}		`json:"v"`				// Cell value
+	Value 				Value			`json:"v"`				// Cell value
 	Description			string			`json:"d"`				// Cell description
 	Marker 				int				`json:"m"`				// Cell marker
 }
@@ -117,7 +116,7 @@ func (c *Chunk) AddRow(values ...interface{}) {
 			cells[i] = cc;
 		} else {
 			cells[i] = Cell{
-				Value: v,
+				Value: newValue(v),
 			}
 		}
 	}
@@ -127,21 +126,29 @@ func (c *Chunk) AddRow(values ...interface{}) {
 	})
 }
 
-// Cast cell value to string
-func (c Cell) String() string {
-	if c.Value == nil {
-		return ""
-	} else if v, ok := c.Value.(string); ok {
-		return v
-	} else if v, ok := c.Value.(int); ok {
-		return strconv.Itoa(v)
-	} else {
-		return "undef"
+func NewCell(val interface{}, Description string, Marker int) Cell {
+	return Cell{
+		Value: newValue(val),
+		Description: Description,
+		Marker: Marker,
 	}
 }
 
+func NewFloatCell(val float64, precision int8, Description string, Marker int) Cell {
+	return Cell{
+		Value: Value{Numberv: &val, Precision: &precision},
+		Description: Description,
+		Marker: Marker,
+	}
+}
+
+// Cast cell value to string
+func (c Cell) String() string {
+	return c.Value.String()
+}
+
 func (c Cell) GetAlign() int {
-	if _, ok := c.Value.(string); ok {
+	if c.Value.Numberv == nil {
 		return ALIGN_LEFT;
 	} else {
 		return ALIGN_RIGHT;

@@ -15,9 +15,9 @@ func main() {
 	ch.AddHeaders("Name", "Integers", "Floats")
 	ch.AddRow("Foo", 15, 0.3)
 	ch.AddRow("Log bar", 15863, 1.001)
-	ch.AddRow("Third one", reports.Cell{Value: -82, Marker: reports.MARKER_HIGHLIGHT}, 1.001)
-	ch.AddRow("4", reports.Cell{Value: -82, Marker: reports.MARKER_NEGATIVE}, 1.001)
-	ch.AddRow("*****", reports.Cell{Value: -82, Marker: reports.MARKER_POSITIVE}, 1.001)
+	ch.AddRow("Third one", reports.NewCell(-82, "", reports.MARKER_HIGHLIGHT), 1.001)
+	ch.AddRow("4", reports.NewCell(-82, "", reports.MARKER_POSITIVE), 8.9)
+	ch.AddRow("*****", reports.NewFloatCell(-82, 3, "", reports.MARKER_NEGATIVE), 91.2735)
 
 
 	demo.Add(*ch)
