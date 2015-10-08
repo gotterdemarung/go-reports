@@ -147,6 +147,7 @@ func (c Cell) String() string {
 	return c.Value.String()
 }
 
+// Returns alignment for cell
 func (c Cell) GetAlign() int {
 	if c.Value.Numberv == nil {
 		return ALIGN_LEFT;

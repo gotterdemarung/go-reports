@@ -59,3 +59,16 @@ func (v *Value) String() string {
 		return ""
 	}
 }
+
+// Comparator, used in sorting
+func (v *Value) Less(other Value) bool {
+	if v.Stringv != nil && other.Stringv != nil {
+		// Both values contains strings
+		return *v.Stringv < *other.Stringv
+	} else if v.Numberv != nil && other.Numberv != nil {
+		// Both values are numbers
+		return *v.Numberv < *other.Numberv
+	} else {
+		return false
+	}
+}
