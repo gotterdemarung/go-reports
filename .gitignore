@@ -1,0 +1,12 @@
+# Dev
+*.iml
+
+# Reports
+*.gr
+
+# Binaries
+/catgr
+/demoreport
+/catgr-darwin64
+/catgr-linux64
+/catgr-win64.exe

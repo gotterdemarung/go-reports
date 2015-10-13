@@ -8,12 +8,14 @@ import (
 
 func main() {
 	// Building demo report
-	demo := reports.NewReport("Demo report", "demo", 1)
+	demo := reports.NewReport("Demo report", "demo")
 
 	// Building chunk of data
 	ch := reports.NewChunk("Chunk #1", "This is example chunk")
 	ch.AddHeaders("Name", "Integers", "Floats")
 	ch.AddRow("Foo", 15, 0.3)
+	ch.AddRow("Foo 0", 0, "")
+
 	ch.AddRow("Log bar", 15863, 1.001)
 	ch.AddRow("Third one", reports.NewCell(-82, "", reports.MARKER_HIGHLIGHT), 1.001)
 	ch.AddRow("4", reports.NewCell(-82, "", reports.MARKER_POSITIVE), 8.9)
@@ -24,6 +26,7 @@ func main() {
 
 	if len(os.Args) > 1 {
 		// Printing to file
+		demo.SaveToFile(os.Args[1])
 	} else {
 		// Colors
 		cli.ReportPrinter(nil, 0, true)(*demo)

@@ -21,10 +21,9 @@ type Report struct {
 	CreatedAt 			time.Time								// Create at time
 	UpdatedAt			time.Time								// Last update time
 	Type 				string									// Report type
-	TypeVersion			int										// Version of report type
 	Title 				string									// Report title
 	Filters 			Filters									// Filters for report
-	Chunks 				[]Chunk									// Data for report
+	Chunks 				Chunks									// Data for report
 }
 
 // Filters for report
@@ -38,6 +37,9 @@ type Chunk struct {
 	Rowset 				Rowset			`json:"rows"`			// Main report data
 	Priority			int8			`json:"priority"`		// Display priority
 }
+
+// Chunks
+type Chunks []Chunk
 
 // Report chunk headers
 type Headers []Header
@@ -68,12 +70,11 @@ type Cell struct {
 }
 
 // Creates new report
-func NewReport(name, reporttype string, version int) *Report {
+func NewReport(name, reporttype string) *Report {
 	return &Report{
 		CreatedAt:		time.Now().UTC(),
 		UpdatedAt:		time.Now().UTC(),
 		Title:			name,
-		TypeVersion: 	version,
 		Filters: 		map[string]interface{}{},
 		Chunks: 		[]Chunk{},
 	}

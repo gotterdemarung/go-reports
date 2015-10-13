@@ -2,151 +2,104 @@ package reports
 
 import (
 	"fmt"
+	"time"
 	"bytes"
-	"io/ioutil"
-	"compress/gzip"
-	"encoding/json"
+	"encoding/gob"
 	"encoding/binary"
+	"compress/gzip"
 )
 
-
-// Packs report to binary format
-func (r *Report) PackBin() ([]byte, error) {
-	return PackReport(*r)
+type packedReport struct {
+	CreatedAt 			time.Time								// Create at time
+	Type 				string									// Report type
+	Title 				string									// Report title
+	Filters 			Filters									// Filters for report
+	Chunks 				Chunks									// Data for report
 }
 
-// Packs whole report
-func PackReport(r Report) ([]byte, error) {
-	pf, err := PackFilters(r.Filters);
+func PackReport(r Report) []byte {
+	pr := packedReport{
+		CreatedAt:  r.CreatedAt,
+		Type: 		r.Type,
+		Title: 		r.Title,
+		Filters: 	r.Filters,
+		Chunks: 	r.Chunks,
+	}
+
+	buf := new(bytes.Buffer)
+	w, _ := gzip.NewWriterLevel(buf, gzip.BestCompression)
+	enc := gob.NewEncoder(w)
+	_ = enc.Encode(pr)
+	w.Flush()
+	return buf.Bytes()
+}
+
+func UnpackReport(x []byte) (*Report, error) {
+	var ff packedReport
+	r, err := gzip.NewReader(bytes.NewReader(x))
 	if err != nil {
 		return nil, err
 	}
-	pc, err := PackChunks(r.Chunks);
+	dec := gob.NewDecoder(r)
+	err = dec.Decode(&ff)
 	if err != nil {
 		return nil, err
 	}
 
-	buf := bytes.NewBuffer([]byte{})
-
-	// String header
-	strh := []byte(fmt.Sprintf(
-		"%d\n%s\n%d\n%s\n",
-		r.UpdatedAt.Unix(), r.Type, r.TypeVersion, r.Title,
-	))
-
-	// Version
-	_, err = buf.WriteString("a")
-	if err != nil {
-		return nil, err
+	rep := Report{
+		Type: 			ff.Type,
+		Title:			ff.Title,
+		Filters: 		ff.Filters,
+		Chunks: 		ff.Chunks,
+		CreatedAt: 		ff.CreatedAt,
+		UpdatedAt: 		ff.CreatedAt,
 	}
 
-	// Bin header
-	err = binary.Write(buf, binary.LittleEndian, int32(len(strh)))
-	if err != nil {
-		return nil, err
-	}
-	err = binary.Write(buf, binary.LittleEndian, int32(len(pf)))
-	if err != nil {
-		return nil, err
-	}
-	err = binary.Write(buf, binary.LittleEndian, int32(len(pc)))
-	if err != nil {
-		return nil, err
-	}
+	return &rep, nil
+}
 
-	// String header
-	_, err = buf.Write(strh)
-	if err != nil {
-		return nil, err
-	}
+const (
+	pack_marker_number byte = 0
+	pack_marker_string byte = 1
+)
 
-	// Packed filters
-	_, err = buf.Write(pf)
-	if err != nil {
-		return nil, err
-	}
-	// Packed data
-	_, err = buf.Write(pc)
-	if err != nil {
-		return nil, err
+func (v *Value) MarshalBinary() (data []byte, err error) {
+	buf := new(bytes.Buffer)
+	if v.IsNumber() {
+		buf.WriteByte(pack_marker_number)
+		buf.WriteByte(byte(*v.Precision))
+		binary.Write(buf, binary.LittleEndian, *v.Numberv)
+	} else {
+		buf.WriteByte(pack_marker_string)
+		sb := []byte(*v.Stringv)
+		buf.Write(sb)
 	}
 
 	return buf.Bytes(), nil
 }
 
-// Packs filters to byte slice
-func PackFilters(f Filters) ([]byte, error) {
-	bts, err := json.Marshal(f)
-	if err != nil {
-		return nil, err
+func (v *Value) UnmarshalBinary(data []byte) error {
+	if len(data) < 1 {
+		return fmt.Errorf("Invalid data len")
 	}
 
-	var b bytes.Buffer
-	w, err := gzip.NewWriterLevel(&b, gzip.BestCompression)
-	if err != nil {
-		return nil, err
-	}
-	w.Write(bts)
-	w.Close()
+	if data[0] == pack_marker_number {
+		// Number
+		precision := int8(data[1])
+		var f64 float64
+		binary.Read(bytes.NewReader(data[2:]), binary.LittleEndian, &f64)
 
-	return b.Bytes(), nil
-}
+		v.Stringv = nil
+		v.Precision = &precision
+		v.Numberv = &f64
+	} else {
+		// String
+		str := string(data[1:])
 
-// Packs chunks to byte slice
-func PackChunks(c []Chunk) ([]byte, error) {
-	bts, err := json.Marshal(c)
-	if err != nil {
-		return nil, err
-	}
-
-	var b bytes.Buffer
-	w, err := gzip.NewWriterLevel(&b, gzip.BestCompression)
-	if err != nil {
-		return nil, err
-	}
-	w.Write(bts)
-	w.Close()
-
-	return b.Bytes(), nil
-}
-
-// Unpacks filters from bytes
-func UnpackFilters(bts []byte) (*Filters, error) {
-	r, err := gzip.NewReader(bytes.NewReader(bts))
-	if r != nil {
-		return nil, err
+		v.Stringv = &str
+		v.Numberv = nil
+		v.Precision = nil
 	}
 
-	var f Filters = map[string]interface{}{}
-	all, err := ioutil.ReadAll(r)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(all, &f)
-	if err != nil {
-		return nil, err
-	}
-
-	return &f, nil
-}
-
-// Unpacks chunks from bytes
-func UnpackChunks(bts []byte) ([]Chunk, error) {
-	r, err := gzip.NewReader(bytes.NewReader(bts))
-	if r != nil {
-		return nil, err
-	}
-
-	var c []Chunk
-	all, err := ioutil.ReadAll(r)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(all, &c)
-
-	if err != nil {
-		return nil, err
-	}
-
-	return c, nil
+	return nil
 }
