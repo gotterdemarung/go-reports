@@ -1,15 +1,15 @@
 package reports
 
 import (
-	"sort"
 	"fmt"
+	"sort"
 )
 
 // Utility structure, used for sorting
 type rowSorter struct {
-	rowset 			Rowset
-	column 			int
-	asc 			bool
+	rowset Rowset
+	column int
+	asc    bool
 }
 
 // Sorts by column
@@ -22,9 +22,9 @@ func (p Rowset) SortBy(columnsIndex int, ascending bool) error {
 	}
 
 	rs := rowSorter{
-		rowset: 		p,
-		column: 		columnsIndex,
-		asc: 			ascending,
+		rowset: p,
+		column: columnsIndex,
+		asc:    ascending,
 	}
 
 	sort.Sort(rs)

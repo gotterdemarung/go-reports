@@ -5,9 +5,9 @@ import (
 )
 
 type Value struct {
-	Stringv				*string			`json:"s,omitempty"`
-	Numberv				*float64		`json:"n,omitempty"`
-	Precision			*int8			`json:"p,omitempty"`
+	Stringv   *string  `json:"s,omitempty"`
+	Numberv   *float64 `json:"n,omitempty"`
+	Precision *int8    `json:"p,omitempty"`
 }
 
 var emptyString = ""
@@ -29,12 +29,12 @@ func NewValue(o interface{}) Value {
 	} else if v, ok := o.(int); ok {
 		fv := float64(v)
 		return Value{
-			Numberv: &fv,
+			Numberv:   &fv,
 			Precision: &zeroPrecision,
 		}
 	} else if v, ok := o.(float64); ok {
 		return Value{
-			Numberv: &v,
+			Numberv:   &v,
 			Precision: &minus1Precision,
 		}
 	} else {

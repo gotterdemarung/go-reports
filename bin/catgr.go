@@ -1,12 +1,12 @@
 package main
 
 import (
-	"os"
 	"fmt"
-	"strconv"
-	"io/ioutil"
 	"github.com/gotterdemarung/go-reports"
 	"github.com/gotterdemarung/go-reports/cli"
+	"io/ioutil"
+	"os"
+	"strconv"
 )
 
 func main() {
@@ -38,4 +38,3 @@ func main() {
 
 	cli.ReportPrinter(nil, int8(detail), true)(*r)
 }
-

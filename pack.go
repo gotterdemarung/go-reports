@@ -1,29 +1,29 @@
 package reports
 
 import (
+	"bytes"
+	"compress/gzip"
+	"encoding/binary"
+	"encoding/gob"
 	"fmt"
 	"time"
-	"bytes"
-	"encoding/gob"
-	"encoding/binary"
-	"compress/gzip"
 )
 
 type packedReport struct {
-	CreatedAt 			time.Time								// Create at time
-	Type 				string									// Report type
-	Title 				string									// Report title
-	Filters 			Filters									// Filters for report
-	Chunks 				Chunks									// Data for report
+	CreatedAt time.Time // Create at time
+	Type      string    // Report type
+	Title     string    // Report title
+	Filters   Filters   // Filters for report
+	Chunks    Chunks    // Data for report
 }
 
 func PackReport(r Report) []byte {
 	pr := packedReport{
-		CreatedAt:  r.CreatedAt,
-		Type: 		r.Type,
-		Title: 		r.Title,
-		Filters: 	r.Filters,
-		Chunks: 	r.Chunks,
+		CreatedAt: r.CreatedAt,
+		Type:      r.Type,
+		Title:     r.Title,
+		Filters:   r.Filters,
+		Chunks:    r.Chunks,
 	}
 
 	buf := new(bytes.Buffer)
@@ -47,12 +47,12 @@ func UnpackReport(x []byte) (*Report, error) {
 	}
 
 	rep := Report{
-		Type: 			ff.Type,
-		Title:			ff.Title,
-		Filters: 		ff.Filters,
-		Chunks: 		ff.Chunks,
-		CreatedAt: 		ff.CreatedAt,
-		UpdatedAt: 		ff.CreatedAt,
+		Type:      ff.Type,
+		Title:     ff.Title,
+		Filters:   ff.Filters,
+		Chunks:    ff.Chunks,
+		CreatedAt: ff.CreatedAt,
+		UpdatedAt: ff.CreatedAt,
 	}
 
 	return &rep, nil

@@ -1,9 +1,9 @@
 package reports_test
 
 import (
-	"testing"
 	"encoding/json"
 	"github.com/gotterdemarung/go-reports"
+	"testing"
 )
 
 func TestValueIsNumber(t *testing.T) {
@@ -42,9 +42,7 @@ func TestValueMarshall(t *testing.T) {
 		t.Error("JSON unmarshalling error")
 	}
 
-
-
-	v = reports.NewValue(88);
+	v = reports.NewValue(88)
 	bts, err = json.Marshal(v)
 	if err != nil {
 		t.Error(err)
@@ -54,7 +52,7 @@ func TestValueMarshall(t *testing.T) {
 		t.Error("JSON marshalling returns wrong result")
 	}
 
-	v = reports.NewValue(.1);
+	v = reports.NewValue(.1)
 	bts, err = json.Marshal(v)
 	if err != nil {
 		t.Error(err)
