@@ -1,37 +1,58 @@
 package cli
 
 import (
+	c "github.com/gotterdemarung/cfmt"
 	"github.com/gotterdemarung/go-reports"
-	"github.com/mgutz/ansi"
 	"io"
 	"os"
 	"strings"
 )
 
-var ln = []byte("\n")
+type formatter func(string) c.Format
 
-var nocolor = func(in string) string {
-	return in
+func protoColor(fg int) formatter {
+	return func(in string) c.Format {
+		return c.Format{
+			Value: in,
+			Fg:    fg,
+		}
+	}
+}
+
+func protoColorB(fg, bg int) formatter {
+	return func(in string) c.Format {
+		return c.Format{
+			Value: in,
+			Fg:    fg,
+			Bg:    bg,
+		}
+	}
+}
+
+var nocolor = func(in string) c.Format {
+	return c.Format{
+		Value: in,
+	}
 }
 
 type palette struct {
-	Title           func(string) string
-	TitleDeco       func(string) string
-	Description     func(string) string
-	TableHeader     func(string) string
-	MarkerHighlight func(string) string
-	MarkerPositive  func(string) string
-	MarkerNegative  func(string) string
+	Title           formatter
+	TitleDeco       formatter
+	Description     formatter
+	TableHeader     formatter
+	MarkerHighlight formatter
+	MarkerPositive  formatter
+	MarkerNegative  formatter
 }
 
 var colored = palette{
-	Title:           ansi.ColorFunc("28"),
-	TitleDeco:       ansi.ColorFunc("22"),
-	Description:     ansi.ColorFunc("238"),
-	TableHeader:     ansi.ColorFunc("238:233"),
-	MarkerHighlight: ansi.ColorFunc("white+h"),
-	MarkerPositive:  ansi.ColorFunc("119"),
-	MarkerNegative:  ansi.ColorFunc("202"),
+	Title:           protoColor(28),
+	TitleDeco:       protoColor(22),
+	Description:     protoColor(238),
+	TableHeader:     protoColorB(238, 233),
+	MarkerHighlight: protoColor(255),
+	MarkerPositive:  protoColor(119),
+	MarkerNegative:  protoColor(202),
 }
 
 var notcolored = palette{
@@ -66,37 +87,39 @@ func ReportPrinter(w io.Writer, minPriority int8, colors bool) func(r reports.Re
 // Prints report to provider writer
 func printReport(r reports.Report, w io.Writer, minPriority int8, pal *palette) {
 
-	w.Write(ln)
-	w.Write([]byte(pal.Title(" " + r.Title + "\n")))
-	w.Write([]byte(pal.TitleDeco(" " + strings.Repeat("=", len(r.Title)) + "\n")))
+	c.Fprint(w, "\n")
+	c.Fprint(w, " ", pal.Title(r.Title), "\n")
+	c.Fprint(w, " ", pal.TitleDeco(strings.Repeat("=", len(r.Title))), "\n")
+	c.Fprint(w, "\n")
 
-	for _, c := range r.Chunks {
-		if c.Priority >= minPriority {
-			printChunk(c, w, minPriority, pal)
+	for _, ch := range r.Chunks {
+		if ch.Priority >= minPriority {
+			printChunk(ch, w, minPriority, pal)
 		}
 	}
 
-	w.Write(ln)
+	c.Fprint(w, "\n")
 }
 
-func printChunk(c reports.Chunk, w io.Writer, minPriority int8, pal *palette) {
-	w.Write(ln)
-	w.Write([]byte(pal.Title(" " + c.Title + "\n")))
-	w.Write([]byte(pal.TitleDeco(" " + strings.Repeat("-", len(c.Title)) + "\n")))
-	if c.Description != "" {
-		w.Write([]byte(pal.Description(" " + c.Description + "\n")))
+func printChunk(ch reports.Chunk, w io.Writer, minPriority int8, pal *palette) {
+
+	c.Fprint(w, "\n")
+	c.Fprint(w, " ", pal.Title(ch.Title), "\n")
+	c.Fprint(w, " ", pal.TitleDeco(strings.Repeat("=", len(ch.Title))), "\n")
+	if ch.Description != "" {
+		c.Fprint(w, " ", pal.Description(ch.Description), "\n")
 	}
-	w.Write(ln)
+	c.Fprint(w, "\n")
 
 	// Calculating lengths
-	lengths := make([]int, len(c.Headers))
-	for i, h := range c.Headers {
+	lengths := make([]int, len(ch.Headers))
+	for i, h := range ch.Headers {
 		lengths[i] = len(h.Title) + 2
 	}
 
-	for _, r := range c.Rowset {
-		for i, c := range r.Data {
-			l := len(c.String()) + 2
+	for _, r := range ch.Rowset {
+		for i, cc := range r.Data {
+			l := len(cc.String()) + 2
 			if l > lengths[i] {
 				lengths[i] = l
 			}
@@ -104,50 +127,53 @@ func printChunk(c reports.Chunk, w io.Writer, minPriority int8, pal *palette) {
 	}
 
 	// Printing
-	for i, h := range c.Headers {
+	for i, h := range ch.Headers {
 		printHeader(h, lengths[i], w, pal)
-		w.Write([]byte(" "))
+		c.Fprint(w, " ")
 	}
-	w.Write(ln)
-	for _, r := range c.Rowset {
-		for i, c := range r.Data {
-			printCell(c, lengths[i], w, pal)
-			w.Write([]byte(" "))
+	c.Fprint(w, "\n")
+	for _, r := range ch.Rowset {
+		for i, cc := range r.Data {
+			printCell(cc, lengths[i], w, pal)
+			c.Fprint(w, " ")
 		}
-		w.Write(ln)
+		c.Fprint(w, "\n")
 	}
-	w.Write(ln)
+	c.Fprint(w, "\n")
 }
 
-func printHeader(c reports.Header, width int, w io.Writer, pal *palette) {
-	toPrint := c.Title
+func printHeader(ch reports.Header, width int, w io.Writer, pal *palette) {
+	toPrint := ch.Title
 	if len(toPrint) < width {
 		before := (width - len(toPrint)) / 2
 		after := width - len(toPrint) - before
 		toPrint = strings.Repeat(" ", before) + toPrint + strings.Repeat(" ", after)
 	}
 
-	w.Write([]byte(pal.TableHeader(toPrint)))
+	c.Fprint(w, pal.TableHeader(toPrint))
 }
 
-func printCell(c reports.Cell, width int, w io.Writer, pal *palette) {
-	toPrint := c.String()
+func printCell(cc reports.Cell, width int, w io.Writer, pal *palette) {
+	toPrint := cc.String()
 	if len(toPrint) < width {
-		if c.GetAlign() == reports.ALIGN_RIGHT {
+		if cc.GetAlign() == reports.ALIGN_RIGHT {
 			toPrint = strings.Repeat(" ", width-len(toPrint)-1) + toPrint + " "
 		} else {
 			toPrint = " " + toPrint + strings.Repeat(" ", width-len(toPrint)-1)
 		}
 	}
 
-	switch c.Marker {
+	var f c.Format
+	switch cc.Marker {
 	case reports.MARKER_HIGHLIGHT:
-		toPrint = pal.MarkerHighlight(toPrint)
+		f = pal.MarkerHighlight(toPrint)
 	case reports.MARKER_NEGATIVE:
-		toPrint = pal.MarkerNegative(toPrint)
+		f = pal.MarkerNegative(toPrint)
 	case reports.MARKER_POSITIVE:
-		toPrint = pal.MarkerPositive(toPrint)
+		f = pal.MarkerPositive(toPrint)
+	default:
+		f = nocolor(toPrint)
 	}
 
-	w.Write([]byte(toPrint))
+	c.Fprint(w, f)
 }
