@@ -43,16 +43,18 @@ type palette struct {
 	MarkerHighlight formatter
 	MarkerPositive  formatter
 	MarkerNegative  formatter
+	Grid            formatter
 }
 
 var colored = palette{
 	Title:           protoColor(28),
 	TitleDeco:       protoColor(22),
 	Description:     protoColor(238),
-	TableHeader:     protoColorB(238, 233),
+	TableHeader:     protoColor(243),
 	MarkerHighlight: protoColor(255),
 	MarkerPositive:  protoColor(119),
 	MarkerNegative:  protoColor(202),
+	Grid:            protoColor(235),
 }
 
 var notcolored = palette{
@@ -63,6 +65,7 @@ var notcolored = palette{
 	MarkerHighlight: nocolor,
 	MarkerPositive:  nocolor,
 	MarkerNegative:  nocolor,
+	Grid:            nocolor,
 }
 
 // Return report printer function
@@ -88,8 +91,7 @@ func ReportPrinter(w io.Writer, minPriority int8, colors bool) func(r reports.Re
 func printReport(r reports.Report, w io.Writer, minPriority int8, pal *palette) {
 
 	c.Fprint(w, "\n")
-	c.Fprint(w, " ", pal.Title(r.Title), "\n")
-	c.Fprint(w, " ", pal.TitleDeco(strings.Repeat("=", len(r.Title))), "\n")
+	c.Fprint(w, c.FHeader(r.Title))
 	c.Fprint(w, "\n")
 
 	for _, ch := range r.Chunks {
@@ -104,8 +106,7 @@ func printReport(r reports.Report, w io.Writer, minPriority int8, pal *palette) 
 func printChunk(ch reports.Chunk, w io.Writer, minPriority int8, pal *palette) {
 
 	c.Fprint(w, "\n")
-	c.Fprint(w, " ", pal.Title(ch.Title), "\n")
-	c.Fprint(w, " ", pal.TitleDeco(strings.Repeat("=", len(ch.Title))), "\n")
+	c.Fprint(w, c.FHeader(ch.Title))
 	if ch.Description != "" {
 		c.Fprint(w, " ", pal.Description(ch.Description), "\n")
 	}
@@ -129,7 +130,16 @@ func printChunk(ch reports.Chunk, w io.Writer, minPriority int8, pal *palette) {
 	// Printing
 	for i, h := range ch.Headers {
 		printHeader(h, lengths[i], w, pal)
-		c.Fprint(w, " ")
+		if i < len(ch.Headers)-1 {
+			c.Fprint(w, " ")
+		}
+	}
+	c.Fprint(w, "\n")
+	for i, _ := range ch.Headers {
+		c.Fprint(w, pal.Grid(strings.Repeat("─", lengths[i])))
+		if i < len(ch.Headers)-1 {
+			c.Fprint(w, pal.Grid("┴"))
+		}
 	}
 	c.Fprint(w, "\n")
 	for _, r := range ch.Rowset {
