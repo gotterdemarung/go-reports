@@ -50,6 +50,7 @@ type Header struct {
 	Sortable   bool   `json:"o"` // Allows sorting
 	Searchable bool   `json:"f"` // Allows filtering
 	Priority   int8   `json:"p"` // Display priority
+	Dimension  string `json:"d"` // Dimension
 }
 
 // Report rowset

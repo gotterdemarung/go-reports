@@ -121,6 +121,9 @@ func printChunk(ch reports.Chunk, w io.Writer, minPriority int8, pal *palette) {
 	for _, r := range ch.Rowset {
 		for i, cc := range r.Data {
 			l := len(cc.String()) + 2
+			if ch.Headers[i].Dimension != "" {
+				l += len(ch.Headers[i].Dimension) + 1
+			}
 			if l > lengths[i] {
 				lengths[i] = l
 			}
@@ -144,7 +147,7 @@ func printChunk(ch reports.Chunk, w io.Writer, minPriority int8, pal *palette) {
 	c.Fprint(w, "\n")
 	for _, r := range ch.Rowset {
 		for i, cc := range r.Data {
-			printCell(cc, lengths[i], w, pal)
+			printCell(cc, ch.Headers[i], lengths[i], w, pal)
 			c.Fprint(w, " ")
 		}
 		c.Fprint(w, "\n")
@@ -163,8 +166,11 @@ func printHeader(ch reports.Header, width int, w io.Writer, pal *palette) {
 	c.Fprint(w, pal.TableHeader(toPrint))
 }
 
-func printCell(cc reports.Cell, width int, w io.Writer, pal *palette) {
+func printCell(cc reports.Cell, ch reports.Header, width int, w io.Writer, pal *palette) {
 	toPrint := cc.String()
+	if ch.Dimension != "" {
+		toPrint = toPrint + " " + ch.Dimension
+	}
 	if len(toPrint) < width {
 		if cc.GetAlign() == reports.ALIGN_RIGHT {
 			toPrint = strings.Repeat(" ", width-len(toPrint)-1) + toPrint + " "
